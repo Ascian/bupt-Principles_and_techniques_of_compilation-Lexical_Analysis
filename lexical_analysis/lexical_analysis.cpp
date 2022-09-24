@@ -2,12 +2,11 @@
 #include <string>
 #include <fstream>
 #include <iomanip>
-#include <set>
 #include <vector>
 
 using namespace std;
 
-const set<string> KEYWORD_LIST = { "auto", "break", "case", "char", "const", "continue", "default", "do", "double",
+const vector<string> KEYWORD_LIST = { "auto", "break", "case", "char", "const", "continue", "default", "do", "double",
 "else", "enum", "extern", "float", "for", "goto", "if", "int", "long", "register",
 "return", "short", "signed", "sizeof", "static", "struct", "switch", "typedef", "union", "unsigned",
 "void", "volatile", "while" };
@@ -153,6 +152,11 @@ int main()
 
     lexical_analysis(token_stream, id_list, line_num, word_type_num, char_num, program);
 
+    cout << endl << "keyword list:" << endl;
+    for (int i = 0; i < KEYWORD_LIST.size(); i++) {
+        cout << setiosflags(ios::left) << setw(4) << i << KEYWORD_LIST[i] << endl;
+    }
+
     cout << endl << "ID list:" << endl;
     for (int i = 0; i < id_list.size(); i++) {
         cout << setiosflags(ios::left) << setw(4) << i << id_list[i] << endl;
@@ -180,16 +184,6 @@ inline bool is_letter(char ch) { return (ch >= 'a' && ch <= 'z') || (ch >= 'A' &
 
 inline bool is_digit(char ch) { return ch >= '0' && ch <= '9'; }
 
-bool is_keyword(string& str)
-{
-    for (auto iter : KEYWORD_LIST)
-    {
-        if (iter == str)
-            return true;
-    }
-    return false;
-}
-
 inline char get_char(int& char_num, ifstream& program)
 {
     char_num++;
@@ -202,12 +196,34 @@ inline void retract(int& char_num, ifstream& program)
     program.unget();
 }
 
+int reserve(string& str)
+{
+    int high = KEYWORD_LIST.size() - 1;
+    int low = 0;
+    int middle = (high + low) / 2;
+    while (high >= low)
+    {
+        middle = (high + low) / 2;
+        if (KEYWORD_LIST[middle].compare(str) == 0)
+            return middle;
+        else if (KEYWORD_LIST[middle].compare(str) < 0)
+        {
+            low = middle + 1;
+        }
+        else
+        {
+            high = middle - 1;
+        }
+    }
+    return -1;
+}
+
 int table_insert(vector<string>& id_list, const string& id)
 {
     int high = id_list.size() - 1;
     int low = 0;
     int middle = (high + low) / 2;
-    bool bigger = false;
+    bool is_bigger = false;
     while (high >= low)
     {
         middle = (high + low) / 2;
@@ -216,15 +232,15 @@ int table_insert(vector<string>& id_list, const string& id)
         else if (id_list[middle].compare(id) < 0)
         {
             low = middle + 1;
-            bigger = true;
+            is_bigger = true;
         }
         else
         {
             high = middle - 1;
-            bigger = false;
+            is_bigger = false;
         }
     }
-    if(bigger)
+    if(is_bigger)
         id_list.insert(id_list.begin() + middle + 1, id);
     else
         id_list.insert(id_list.begin() + middle, id);
@@ -301,8 +317,9 @@ bool word_identify(struct token& token, int& char_num, int& line_num, vector<str
             else
             {
                 retract(char_num, program);
-                if (is_keyword(token.value))
-                    token.type = KEYWORD;
+                int is_kw = reserve(token.value);
+                if (is_kw != -1)
+                    token = { KEYWORD, to_string(is_kw) };
                 else
                 {
                     int identry = table_insert(id_list, token.value);
