@@ -12,7 +12,7 @@ const set<string> KEYWORD_LIST = { "auto", "break", "case", "char", "const", "co
 "return", "short", "signed", "sizeof", "static", "struct", "switch", "typedef", "union", "unsigned",
 "void", "volatile", "while" };
 
-const int WORD_TYPE_NUM = 29;
+const int WORD_TYPE_NUM = 30; // word_type数量，不包含注释
 enum word_type
 {
     KEYWORD,                    //关键字
@@ -35,6 +35,7 @@ enum word_type
     BITWISE_SHIFT,              //位移，包括"<<"和">>"
     QUESTION_MARK,              //"?"
     COLON,                      //":"
+    SEMICOLON,                  //";"
     LEFT_SQUARE_BRACKET,        //"["
     RIGHT_SQUARE_BRACKET,       //"]"
     LEFT_PARENTHESE,            //"("
@@ -46,6 +47,134 @@ enum word_type
     ARROW,                      //"->"
     ANNOTATION                  //注释
 };
+
+struct token
+{
+    word_type type;
+    string value;
+};
+
+/**
+ * 对输入程序进行词法分析，输出对应记号流，统计源程序中的语句行数、各类单词的个数、以及字符总数，同时检查源程序中存在的词法错误，并报告错误所在的位置
+ * vector<struct token>& token_stream - 需要返回的记号流
+ * vector<string>& id_list - 字符表
+ * int& line_num - 行数
+ * vector<int>& word_type_num - 每种单词类型的数量
+ * int& char_num - 字符总数
+ * ifstream& program - 源程序
+ */
+void lexical_analysis(vector<struct token>& token_stream, vector<string>& id_list, int& line_num, vector<int>& word_type_num, int& char_num, ifstream& program);
+
+string to_string(word_type type)
+{
+    switch (type)
+    {
+    case KEYWORD:
+        return "KW";
+    case ID:
+        return "ID";
+    case NUM:
+        return "NUM";
+    case STRING:
+        return "STR";
+    case RELATION_OPERATOR:
+        return "RELOP";
+    case ASSIGN_OPERATOR:
+        return "ASSIGN";
+    case PLUS_MINUS:
+        return "PLUS_MINUS";
+    case MULTIPLE:
+        return "*";
+    case DIVISION:
+        return "/";
+    case MOD:
+        return "%";
+    case INC_DEC:
+        return "INC_DEC";
+    case LOGICAL_AND_OR:
+        return "AND_OR";
+    case LOGICAL_NEGATION:
+        return "!";
+    case BITWISE_AND:
+        return "&";
+    case BITWISE_OR:
+        return "|";
+    case BITWISE_NEGATION:
+        return "~";
+    case BITWISE_XOR:
+        return "^";
+    case BITWISE_SHIFT:
+        return "SHIFT";
+    case QUESTION_MARK:
+        return "?";
+    case COLON:
+        return ":";
+    case SEMICOLON:
+        return ";";
+    case LEFT_SQUARE_BRACKET:
+        return "[";
+    case RIGHT_SQUARE_BRACKET:
+        return "]";
+    case LEFT_PARENTHESE:
+        return "(";
+    case RIGHT_PARENTHESE:
+        return ")";
+    case LEFT_BRACE:
+        return "{";;
+    case RIGHT_BRACE:
+        return "}";
+    case DOT:
+        return ".";
+    case COMMA:
+        return ",";
+    case ARROW:
+        return "->";
+    case ANNOTATION:
+        return "";
+    default:
+        return "";
+    }
+}
+
+inline string to_string(struct token token)
+{
+    return "<" + to_string(token.type) + ", " + token.value + ">";
+}
+
+int main()
+{
+    ifstream program;
+    program.open("program.txt", ios::in);
+    vector<token> token_stream;
+    vector<string> id_list;
+    int line_num = 0;
+    int char_num = 0;
+    vector<int> word_type_num(WORD_TYPE_NUM);
+
+    lexical_analysis(token_stream, id_list, line_num, word_type_num, char_num, program);
+
+    cout << endl << "ID list:" << endl;
+    for (int i = 0; i < id_list.size(); i++) {
+        cout << setiosflags(ios::left) << setw(4) << i << id_list[i] << endl;
+    }
+
+    cout << endl << "token stream:" << endl;
+    for (int i = 0; i < token_stream.size(); i++) {
+        cout << to_string(token_stream[i]) << " ";
+    }
+
+    cout << endl << "word type num:" << endl;
+    for (int i = 0; i < word_type_num.size(); i++)
+    {
+        cout << setiosflags(ios::left) << setw(14) << to_string((word_type)i) << word_type_num[i] << endl;
+    }
+
+    cout << "char num: " << char_num << endl;
+
+    cout << "line num: " << line_num << endl;
+
+    return 0;
+}
 
 inline bool is_letter(char ch) { return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'); }
 
@@ -61,12 +190,6 @@ bool is_keyword(string& str)
     return false;
 }
 
-struct token
-{
-    word_type type;
-    string value;
-};
-
 inline char get_char(int& char_num, ifstream& program)
 {
     char_num++;
@@ -79,15 +202,45 @@ inline void retract(int& char_num, ifstream& program)
     program.unget();
 }
 
+int table_insert(vector<string>& id_list, const string& id)
+{
+    int high = id_list.size() - 1;
+    int low = 0;
+    int middle = (high + low) / 2;
+    bool bigger = false;
+    while (high >= low)
+    {
+        middle = (high + low) / 2;
+        if (id_list[middle].compare(id) == 0)
+            return middle;
+        else if (id_list[middle].compare(id) < 0)
+        {
+            low = middle + 1;
+            bigger = true;
+        }
+        else
+        {
+            high = middle - 1;
+            bigger = false;
+        }
+    }
+    if(bigger)
+        id_list.insert(id_list.begin() + middle + 1, id);
+    else
+        id_list.insert(id_list.begin() + middle, id);
+    return middle;
+}
+
 /**
- * 对输入字符串进行分析，分析第一个遇到的单词的类型
+ * 对输入字符串进行分析，分析第一个遇到的单词的类型，遇到错误或EOF文件指针回退一格
  * token& token - 需要返回的记号
  * int& char_num - 字符总数
+ * int& line_num - 行数
  * vector<string>& id_list - 字符表
  * ifstream& program - 源程序
  * 返回：是否分析成功
  */
-bool word_identify(struct token& token, int& char_num, vector<string>& id_list, ifstream& program)
+bool word_identify(struct token& token, int& char_num, int& line_num, vector<string>& id_list, ifstream& program)
 {
     int state = 0;
     char c = get_char(char_num, program);
@@ -122,10 +275,11 @@ bool word_identify(struct token& token, int& char_num, vector<string>& id_list, 
             case '%': state = 19; break;
             case '&':
             case '|': state = 20; break;
-            case '~': token = { BITWISE_NEGATION, "" }; return true;
             case '^': state = 21; break;
+            case '~': token = { BITWISE_NEGATION, "" }; return true;
             case '?': token = { QUESTION_MARK, "" }; return true;
             case ':': token = { COLON, "" }; return true;
+            case ';': token = { SEMICOLON, "" }; return true;
             case '[': token = { LEFT_SQUARE_BRACKET, "" }; return true;
             case ']': token = { RIGHT_SQUARE_BRACKET, "" }; return true;
             case '(': token = { LEFT_PARENTHESE, "" }; return true;
@@ -150,8 +304,8 @@ bool word_identify(struct token& token, int& char_num, vector<string>& id_list, 
                     token.type = KEYWORD;
                 else
                 {
-                    id_list.push_back(token.value);
-                    token = { ID, to_string(id_list.size() - 1)};
+                    int identry = table_insert(id_list, token.value);
+                    token = { ID, to_string(identry) };
                 }
                 return true;
             }
@@ -391,6 +545,7 @@ bool word_identify(struct token& token, int& char_num, vector<string>& id_list, 
             c = get_char(char_num, program);
             if (c == EOF || c == '\n')
             {
+                retract(char_num, program);
                 token = { ANNOTATION, "" };
                 return true;
             }
@@ -399,7 +554,12 @@ bool word_identify(struct token& token, int& char_num, vector<string>& id_list, 
         case 17: //多行注释
             c = get_char(char_num, program);
             if (c == EOF)
+            {
+                retract(char_num, program);
                 return false;
+            }
+            if (c == '\n')
+                line_num++;
             if (c == '*')
                 state = 18;
             else
@@ -408,7 +568,12 @@ bool word_identify(struct token& token, int& char_num, vector<string>& id_list, 
         case 18:
             c = get_char(char_num, program);
             if (c == EOF)
+            {
+                retract(char_num, program);
                 return false;
+            }
+            if (c == '\n')
+                line_num++;
             if (c == '/')
             {
                 token = { ANNOTATION, "" };
@@ -471,15 +636,6 @@ bool word_identify(struct token& token, int& char_num, vector<string>& id_list, 
     }
 }
 
-/**
- * 对输入程序进行词法分析，输出对应记号流，统计源程序中的语句行数、各类单词的个数、以及字符总数，同时检查源程序中存在的词法错误，并报告错误所在的位置
- * vector<struct token>& token_stream - 需要返回的记号流字符串
- * vector<string>& id_list - 字符表
- * int& line_num - 行数
- * vector<int>& word_type_num - 每种单词类型的数量
- * int& char_num - 字符总数
- * ifstream& program - 源程序
- */
 void lexical_analysis(vector<struct token>& token_stream, vector<string>& id_list, int& line_num, vector<int>& word_type_num, int& char_num, ifstream& program)
 {
     char c;
@@ -496,9 +652,9 @@ void lexical_analysis(vector<struct token>& token_stream, vector<string>& id_lis
         {
             retract(char_num, program);
             struct token token;
-            if (!word_identify(token, char_num, id_list, program))
-                cout << "error line " << line_num << endl;
-            else if(token.type != ANNOTATION)
+            if (!word_identify(token, char_num, line_num, id_list, program))
+                cout << "error line " << line_num + 1 << endl;
+            else if (token.type != ANNOTATION)
             {
                 word_type_num[token.type]++;
                 token_stream.push_back(token);
@@ -506,111 +662,6 @@ void lexical_analysis(vector<struct token>& token_stream, vector<string>& id_lis
         }
         c = get_char(char_num, program);
     }
-}
-
-string to_string(word_type type)
-{
-    switch (type)
-    {
-    case KEYWORD:
-        return "KW";
-    case ID:
-        return "ID";
-    case NUM:
-        return "NUM";
-    case STRING:
-        return "STR";
-    case RELATION_OPERATOR:
-        return "RELOP";
-    case ASSIGN_OPERATOR:
-        return "ASSIGN";
-    case PLUS_MINUS:
-        return "PLUS_MINUS";
-    case MULTIPLE:
-        return "*";
-    case DIVISION:
-        return "/";
-    case MOD:
-        return "%";
-    case INC_DEC:
-        return "INC_DEC";
-    case LOGICAL_AND_OR:
-        return "AND_OR";
-    case LOGICAL_NEGATION:
-        return "!";
-    case BITWISE_AND:
-        return "&";
-    case BITWISE_OR:
-        return "|";
-    case BITWISE_NEGATION:
-        return "~";
-    case BITWISE_XOR:
-        return "^";
-    case BITWISE_SHIFT:
-        return "SHIFT";
-    case QUESTION_MARK:
-        return "?";
-    case COLON:
-        return ":";
-    case LEFT_SQUARE_BRACKET:
-        return "[";
-    case RIGHT_SQUARE_BRACKET:
-        return "]";
-    case LEFT_PARENTHESE:
-        return "(";
-    case RIGHT_PARENTHESE:
-        return ")";
-    case LEFT_BRACE:
-        return "{";;
-    case RIGHT_BRACE:
-        return "}";
-    case DOT:
-        return ".";
-    case COMMA:
-        return ",";
-    case ARROW:
-        return "->";
-    case ANNOTATION:
-        return "";
-    default:
-        return "";
-    }
-}
-
-inline string to_string(struct token token)
-{
-    return "<" + to_string(token.type) + ", " + token.value + ">";
-}
-
-int main()
-{
-    ifstream program;
-    program.open("program.c", ios::in);
-    vector<token> token_stream;
-    vector<string> id_list;
-    int line_num;
-    vector<int> word_type_num(WORD_TYPE_NUM);
-    int char_num;
-
-    lexical_analysis(token_stream, id_list, line_num, word_type_num, char_num, program);
-
-    cout << "ID list:" << endl;
-    for (int i = 0; i < id_list.size(); i++) {
-        cout << setw(4) << i << id_list[i] << endl;
-    }
-
-    cout << "token stream:" << endl;
-    for (int i = 0; i < token_stream.size(); i++) {
-        cout << to_string(token_stream[i]) << " ";
-    }
-
-    cout << "word type num:" << endl;
-    for (int i = 0; i < word_type_num.size(); i++)
-    {
-        cout << setw(25) << to_string(i) << word_type_num[i] << endl;
-    }
-
-    cout << "char num: " << char_num << endl;
-
-    return 0;
+    line_num++; //加上最后一行
+    char_num--; //减去文件结束符EOF
 }
