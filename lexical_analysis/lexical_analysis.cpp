@@ -12,7 +12,7 @@ const set<string> KEYWORD_LIST = { "auto", "break", "case", "char", "const", "co
 "return", "short", "signed", "sizeof", "static", "struct", "switch", "typedef", "union", "unsigned",
 "void", "volatile", "while" };
 
-const int WORD_TYPE_NUM = 30; // word_type数量，不包含注释
+const int WORD_TYPE_AMOUNT = 30; // word_type数量，不包含注释
 enum word_type
 {
     KEYWORD,                    //关键字
@@ -149,7 +149,7 @@ int main()
     vector<string> id_list;
     int line_num = 0;
     int char_num = 0;
-    vector<int> word_type_num(WORD_TYPE_NUM);
+    vector<int> word_type_num(WORD_TYPE_AMOUNT);
 
     lexical_analysis(token_stream, id_list, line_num, word_type_num, char_num, program);
 
@@ -232,7 +232,7 @@ int table_insert(vector<string>& id_list, const string& id)
 }
 
 /**
- * 对输入字符串进行分析，分析第一个遇到的单词的类型，遇到错误或EOF文件指针回退一格
+ * 对输入字符串进行分析，分析第一个遇到的单词的类型，遇到错误或EOF，文件指针回退一格
  * token& token - 需要返回的记号
  * int& char_num - 字符总数
  * int& line_num - 行数
@@ -244,7 +244,7 @@ bool word_identify(struct token& token, int& char_num, int& line_num, vector<str
 {
     int state = 0;
     char c = get_char(char_num, program);
-    char temp;
+    char last_char = c;
     while (c != EOF)
     {
         switch (state)
@@ -255,27 +255,28 @@ bool word_identify(struct token& token, int& char_num, int& line_num, vector<str
                 state = 1;
                 break;
             }
-            else if (is_digit(c))
+            else if (is_digit(c) && c != '0')
             {
                 state = 2;
                 break;
             }
             switch (c)
             {
-            case '\'': state = 8; break;
-            case '"': state = 9; break;
+            case '0': state = 3; break;
+            case '\'': state = 15; break;
+            case '"': state = 16; break;
             case '<':
-            case '>': state = 10; break;
-            case '=': state = 11; break;
-            case '!': state = 12; break;
+            case '>': state = 17; break;
+            case '=': state = 18; break;
+            case '!': state = 19; break;
             case '+':
-            case '-': state = 13; break;
-            case '*': state = 14; break;
-            case '/': state = 15; break;
-            case '%': state = 19; break;
+            case '-': state = 20; break;
+            case '*': state = 21; break;
+            case '/': state = 22; break;
+            case '%': state = 26; break;
             case '&':
-            case '|': state = 20; break;
-            case '^': state = 21; break;
+            case '|': state = 27; break;
+            case '^': state = 28; break;
             case '~': token = { BITWISE_NEGATION, "" }; return true;
             case '?': token = { QUESTION_MARK, "" }; return true;
             case ':': token = { COLON, "" }; return true;
@@ -316,47 +317,66 @@ bool word_identify(struct token& token, int& char_num, int& line_num, vector<str
             if (is_digit(c))
                 state = 2;
             else if (c == '.')
-                state = 3;
-            else if (c == 'E')
-                state = 5;
-            else
-            {
-                retract(char_num, program);
-                token.type = NUM;
-                return true;
-            }
-            break;
-        case 3: //小数点状态
-            token.value += c;
-            c = get_char(char_num, program);
-            if (is_digit(c))
-                state = 4;
-            else
-            {
-                retract(char_num, program);
-                return false;
-            }
-            break;
-        case 4: //小数状态
-            token.value += c;
-            c = get_char(char_num, program);
-            if (is_digit(c))
-                state = 4;
-            else if (c == 'E')
-                state = 5;
-            else
-            {
-                retract(char_num, program);
-                token.type = NUM;
-                return true;
-            }
-            break;
-        case 5: //指数状态
-            token.value += c;
-            c = get_char(char_num, program);
-            if (is_digit(c))
+                state = 10;
+            else if (c == 'e' || c == 'E')
+                state = 12;
+            else if (c == 'u' || c == 'U')
                 state = 7;
-            else if (c == '+' || c == '-')
+            else if (c == 'l' || c == 'L')
+                state = 8;
+            else
+            {
+                retract(char_num, program);
+                token.type = NUM;
+                return true;
+            }
+            break;
+        case 3: //0开头状态
+            token.value += c;
+            c = get_char(char_num, program);
+            if (c <= '7' && c >= '0')
+                state = 4;
+            else if (c == 'x' || c == 'X')
+                state = 5;
+            else if (c == 'u' || c == 'U')
+                state = 7;
+            else if (c == 'l' || c == 'L')
+                state = 8;
+            else if (c > '7' && c <= '9')
+                state = 9;
+            else if (c == '.')
+                state = 10;
+            else
+            {
+                retract(char_num, program);
+                token.type = NUM;
+                return true;
+            }
+            break;
+        case 4: //八进制数
+            token.value += c;
+            c = get_char(char_num, program);
+            if (c <= '7' && c >= '0')
+                state = 4;
+            else if (c == 'u' || c == 'U')
+                state = 7;
+            else if (c == 'l' || c == 'L')
+                state = 8;
+            else if (c > '7' && c <= '9')
+                state = 9;
+            else if (c == '.')
+                state = 10;
+            else
+            {
+                retract(char_num, program);
+                token.type = NUM;
+                return true;
+            }
+            break;
+        case 5: //十六进制数
+            token.value += c;
+            c = get_char(char_num, program);
+            if (is_digit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))
                 state = 6;
             else
             {
@@ -367,19 +387,12 @@ bool word_identify(struct token& token, int& char_num, int& line_num, vector<str
         case 6:
             token.value += c;
             c = get_char(char_num, program);
-            if (is_digit(c))
+            if (is_digit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))
+                state = 6;
+            else if (c == 'u' || c == 'U')
                 state = 7;
-            else
-            {
-                retract(char_num, program);
-                return false;
-            }
-            break;
-        case 7:
-            token.value += c;
-            c = get_char(char_num, program);
-            if (is_digit(c))
-                state = 7;
+            else if (c == 'l' || c == 'L')
+                state = 8;
             else
             {
                 retract(char_num, program);
@@ -387,7 +400,154 @@ bool word_identify(struct token& token, int& char_num, int& line_num, vector<str
                 return true;
             }
             break;
-        case 8: //字符常量
+        case 7: //u后缀状态
+            token.value += c;
+            c = get_char(char_num, program);
+            if (c == 'l' || c == 'L')
+            {
+                token.value += c;
+                c = get_char(char_num, program);
+                if (c == 'l' || c == 'L')
+                {
+                    token.value += c;
+                    token.type = NUM;
+                    return true;
+                }
+                else
+                {
+                    retract(char_num, program);
+                    token.type = NUM;
+                    return true;
+                }
+            }
+            else
+            {
+                retract(char_num, program);
+                token.type = NUM;
+                return true;
+            }
+            break;
+        case 8: //l后缀状态
+            token.value += c;
+            c = get_char(char_num, program);
+            if (c == 'l' || c == 'L')
+            {
+                token.value += c;
+                c = get_char(char_num, program);
+                if (c == 'u' || c == 'U')
+                {
+                    token.value += c;
+                    token.type = NUM;
+                    return true;
+                }
+                else
+                {
+                    retract(char_num, program);
+                    token.type = NUM;
+                    return true;
+                }
+            }
+            else
+            {
+                retract(char_num, program);
+                token.type = NUM;
+                return true;
+            }
+            break;
+        case 9: //实型状态
+            token.value += c;
+            c = get_char(char_num, program);
+            if (c > '7' && c <= '9')
+                state = 9;
+            else if (c == '.')
+                state = 10;
+            else
+            {
+                retract(char_num, program);
+                return false;
+            }
+            break;
+        case 10: //小数点状态
+            token.value += c;
+            c = get_char(char_num, program);
+            if (is_digit(c))
+                state = 11;
+            else if (c == 'f' || c == 'F' || c == 'l' || c == 'L')
+            {
+                token.value += c;
+                token.type = NUM;
+                return true;
+            }
+            else
+            {
+                retract(char_num, program);
+                token.type = NUM;
+                return true;
+            }
+            break;
+        case 11: //小数状态
+            token.value += c;
+            c = get_char(char_num, program);
+            if (is_digit(c))
+                state = 11;
+            else if (c == 'e' || c == 'E')
+                state = 12;
+            else if (c == 'f' || c == 'F' || c == 'l' || c == 'L')
+            {
+                token.value += c;
+                token.type = NUM;
+                return true;
+            }
+            else
+            {
+                retract(char_num, program);
+                token.type = NUM;
+                return true;
+            }
+            break;
+        case 12: //指数状态
+            token.value += c;
+            c = get_char(char_num, program);
+            if (is_digit(c))
+                state = 14;
+            else if (c == '+' || c == '-')
+                state = 13;
+            else
+            {
+                retract(char_num, program);
+                return false;
+            }
+            break;
+        case 13:
+            token.value += c;
+            c = get_char(char_num, program);
+            if (is_digit(c))
+                state = 14;
+            else
+            {
+                retract(char_num, program);
+                return false;
+            }
+            break;
+        case 14:
+            token.value += c;
+            c = get_char(char_num, program);
+            if (is_digit(c))
+                state = 14;
+            else if (c == 'f' || c == 'F' || c == 'l' || c == 'L')
+            {
+                token.value += c;
+                token.type = NUM;
+                return true;
+            }
+            else
+            {
+                retract(char_num, program);
+                token.type = NUM;
+                return true;
+            }
+            break;
+        case 15: //字符常量
             token.value += c;
             c = get_char(char_num, program);
             if (c == '\'')
@@ -402,9 +562,9 @@ bool word_identify(struct token& token, int& char_num, int& line_num, vector<str
                 return false;
             }
             else
-                state = 8;
+                state = 15;
             break;
-        case 9: // 字符串常量
+        case 16: // 字符串常量
             token.value += c;
             c = get_char(char_num, program);
             if (c == '\"')
@@ -419,11 +579,11 @@ bool word_identify(struct token& token, int& char_num, int& line_num, vector<str
                 return false;
             }
             else
-                state = 9;
+                state = 16;
             break;
-        case 10: //'<'和'>'状态
+        case 17: //'<'和'>'状态
             token.value += c;
-            temp = c;
+            last_char = c;
             c = get_char(char_num, program);
             if (c == '=')
             {
@@ -431,7 +591,7 @@ bool word_identify(struct token& token, int& char_num, int& line_num, vector<str
                 token.type = RELATION_OPERATOR;
                 return true;
             }
-            if (c == temp)
+            if (c == last_char)
             {
                 token.value += c;
                 c = get_char(char_num, program);
@@ -452,7 +612,7 @@ bool word_identify(struct token& token, int& char_num, int& line_num, vector<str
             token.type = RELATION_OPERATOR;
             return true;
             break;
-        case 11: //'='状态
+        case 18: //'='状态
             token.value += c;
             c = get_char(char_num, program);
             if (c == '=')
@@ -465,7 +625,7 @@ bool word_identify(struct token& token, int& char_num, int& line_num, vector<str
             token.type = ASSIGN_OPERATOR;
             return true;
             break;
-        case 12: //'!'状态
+        case 19: //'!'状态
             token.value += c;
             c = get_char(char_num, program);
             if (c == '=')
@@ -479,9 +639,9 @@ bool word_identify(struct token& token, int& char_num, int& line_num, vector<str
             token.value = "";
             return true;
             break;
-        case 13: //'+'和'-'状态
+        case 20: //'+'和'-'状态
             token.value += c;
-            temp = c;
+            last_char = c;
             c = get_char(char_num, program);
             if (c == '=')
             {
@@ -489,13 +649,13 @@ bool word_identify(struct token& token, int& char_num, int& line_num, vector<str
                 token.type = ASSIGN_OPERATOR;
                 return true;
             }
-            if (c == temp)
+            if (c == last_char)
             {
                 token.value += c;
                 token.type = INC_DEC;
                 return true;
             }
-            if (temp == '-' && c == '>')
+            if (last_char == '-' && c == '>')
             {
                 token.value = "";
                 token.type = ARROW;
@@ -505,7 +665,7 @@ bool word_identify(struct token& token, int& char_num, int& line_num, vector<str
             token.type = PLUS_MINUS;
             return true;
             break;
-        case 14: //'*'状态
+        case 21: //'*'状态
             token.value += c;
             c = get_char(char_num, program);
             if (c == '=')
@@ -518,7 +678,7 @@ bool word_identify(struct token& token, int& char_num, int& line_num, vector<str
             token = { MULTIPLE, "" };
             return true;
             break;
-        case 15: // '/'状态
+        case 22: // '/'状态
             token.value += c;
             c = get_char(char_num, program);
             if (c == '=')
@@ -529,19 +689,19 @@ bool word_identify(struct token& token, int& char_num, int& line_num, vector<str
             }
             if (c == '/') //单行注释
             {
-                state = 16;
+                state = 23;
                 break;
             }
             if (c == '*') //多行注释
             {
-                state = 17;
+                state = 24;
                 break;
             }
             retract(char_num, program);
             token = { DIVISION, "" };
             return true;
             break;
-        case 16: //单行注释
+        case 23: //单行注释
             c = get_char(char_num, program);
             if (c == EOF || c == '\n')
             {
@@ -549,9 +709,9 @@ bool word_identify(struct token& token, int& char_num, int& line_num, vector<str
                 token = { ANNOTATION, "" };
                 return true;
             }
-            state = 16;
+            state = 23;
             break;
-        case 17: //多行注释
+        case 24: //多行注释
             c = get_char(char_num, program);
             if (c == EOF)
             {
@@ -561,11 +721,11 @@ bool word_identify(struct token& token, int& char_num, int& line_num, vector<str
             if (c == '\n')
                 line_num++;
             if (c == '*')
-                state = 18;
+                state = 25;
             else
-                state = 17;
+                state = 24;
             break;
-        case 18:
+        case 25:
             c = get_char(char_num, program);
             if (c == EOF)
             {
@@ -580,13 +740,13 @@ bool word_identify(struct token& token, int& char_num, int& line_num, vector<str
                 return true;
             }
             if (c == '*')
-                state = 18;
+                state = 25;
             else
-                state = 17;
+                state = 24;
             break;
-        case 19: //'%'状态
+        case 26: //'%'状态
             token.value += c;
-            temp = c;
+            last_char = c;
             if (c == '=')
             {
                 token.value += c;
@@ -596,9 +756,9 @@ bool word_identify(struct token& token, int& char_num, int& line_num, vector<str
             retract(char_num, program);
             token = { MOD, "" };
             return true;
-        case 20: //'&'和'|'状态
+        case 27: //'&'和'|'状态
             token.value += c;
-            temp = c;
+            last_char = c;
             c = get_char(char_num, program);
             if (c == '=')
             {
@@ -606,19 +766,19 @@ bool word_identify(struct token& token, int& char_num, int& line_num, vector<str
                 token.type = ASSIGN_OPERATOR;
                 return true;
             }
-            if (c == temp)
+            if (c == last_char)
             {
                 token.value += c;
                 token.type = LOGICAL_AND_OR;
                 return true;
             }
             retract(char_num, program);
-            if (temp == '&')
+            if (last_char == '&')
                 token = { BITWISE_AND, "" };
             else
                 token = { BITWISE_OR, "" };
             return true;
-        case 21: //'^'状态
+        case 28: //'^'状态
             token.value += c;
             c = get_char(char_num, program);
             if (c == '=')
