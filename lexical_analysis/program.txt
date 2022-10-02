@@ -25,6 +25,7 @@ SOCKADDR_IN localAdd;//本地DNS地址信息
 pthread_mutex_t output;//输出线程锁
 pthread_mutex_t modifyTotalQueryNum;//修改queryNum线程锁
 pthread_mutex_t modifyCache;//修改域名-IP表缓存线程锁
+1.Ex
 
 int debugLevel = 1;//debug等级
 char* dnsIp = "218.85.157.99"; //主机DNS的IP地址
