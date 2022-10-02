@@ -57,6 +57,7 @@ enum word_type
     ARROW,                      //"->"
     ANNOTATION,                  //注释
 
+    //关系运算符属性
     GREATER,                    //">"
     GREATER_EQUAL,              //">="
     LESS,                       //"<"
@@ -64,6 +65,7 @@ enum word_type
     EQUAL,                      //"=="
     UNEQUAL,                    //"!="
 
+    //赋值运算符属性
     SIMPLE_EQUAL,               //"="
     PLUS_EQUAL,                 //"+="
     MINUS_EQUAL,                //"-="
@@ -270,17 +272,17 @@ int main()
 
     cout << endl << "keyword list:" << endl;
     for (int i = 0; i < KEYWORD_LIST.size(); i++) {
-        cout << setiosflags(ios::left) << setw(4) << i << KEYWORD_LIST[i] << endl;
+        cout << setiosflags(ios::left) << setw(10) << i << KEYWORD_LIST[i] << endl;
     }
 
     cout << endl << "ID list:" << endl;
     for (int i = 0; i < id_list.size(); i++) {
-        cout << setiosflags(ios::left) << setw(4) << i << id_list[i] << endl;
+        cout << setiosflags(ios::left) << setw(10) << i << id_list[i] << endl;
     }
 
     cout << endl << "string list:" << endl;
     for (int i = 0; i < str_list.size(); i++) {
-        cout << setiosflags(ios::left) << setw(4) << i << str_list[i] << endl;
+        cout << setiosflags(ios::left) << setw(10) << i << str_list[i] << endl;
     }
 
     cout << endl << "token stream:" << endl;
@@ -321,7 +323,7 @@ inline void retract(int& char_num, ifstream& program)
 
 inline void error(const string& str, const int& line_num)
 {
-    cout << "error " << line_num << ": " << str << endl;
+    cout << "error " << line_num + 1 << ": " << str << endl;
 }
 
 //二分搜索str在KEYWORD_LIST的位置，若搜索到返回位置，否者返回-1
