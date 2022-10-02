@@ -1,3 +1,5 @@
+
+'\x100'
 //与主机DNS通信线程结构体
 struct Server {
     int isOccupied;//判断是否被占用

@@ -421,12 +421,13 @@ void word_analysis(vector<struct token>& token_stream, vector<string>& id_list, 
             case 'x':
                 if (buf.length() >= 2 && (is_digit(buf[2]) || (buf[2] >= 'a' && buf[2] <= 'f') || (buf[2] >= 'A' && buf[2] <= 'F')))
                 {
-                    token.value.c = stoi(buf.substr(2), 0, 16);
-                    if (token.value.c > 0xff)
+                    int temp = stoi(buf.substr(2), 0, 16);
+                    if (temp > 0xff)
                     {
                         error(buf, line_num);
                         return;
                     }
+                    token.value.c = stoi(buf.substr(2), 0, 16);
                 }
                 else
                 {
