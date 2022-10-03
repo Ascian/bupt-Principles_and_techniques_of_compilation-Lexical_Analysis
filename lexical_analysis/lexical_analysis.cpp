@@ -380,8 +380,8 @@ int table_insert(vector<string>& table, const string& str)
 }
 
 //将分析出的记号加入记号流
-void word_analysis(vector<struct token>& token_stream, vector<string>& id_list, vector<string>& str_list, vector<int>& word_type_num, 
-    const word_type& type, const string& buf, const int& line_num, const int& num_base = 10)
+void word_analysis(vector<struct token>& token_stream, vector<string>& id_list, vector<string>& str_list, vector<int>& word_type_num,
+    const int& line_num, const word_type& type, const string& buf = "", const int& num_base = 10)
 {
     struct token token;
     token.type = type;
@@ -529,17 +529,17 @@ void lexical_analysis(vector<struct token>& token_stream, vector<string>& id_lis
             case '|':   state = 27; break;
             case '^':   state = 28; break;
             case '.':   state = 29; break;
-            case '~':   word_analysis(token_stream, id_list, str_list, word_type_num, BITWISE_NEGATION, buf, line_num);    break;
-            case '?':   word_analysis(token_stream, id_list, str_list, word_type_num, BITWISE_NEGATION, buf, line_num);    break;
-            case ':':   word_analysis(token_stream, id_list, str_list, word_type_num, BITWISE_NEGATION, buf, line_num);    break;
-            case ';':   word_analysis(token_stream, id_list, str_list, word_type_num, BITWISE_NEGATION, buf, line_num);    break;
-            case '[':   word_analysis(token_stream, id_list, str_list, word_type_num, BITWISE_NEGATION, buf, line_num);    break;
-            case ']':   word_analysis(token_stream, id_list, str_list, word_type_num, BITWISE_NEGATION, buf, line_num);    break;
-            case '(':   word_analysis(token_stream, id_list, str_list, word_type_num, BITWISE_NEGATION, buf, line_num);    break;
-            case ')':   word_analysis(token_stream, id_list, str_list, word_type_num, BITWISE_NEGATION, buf, line_num);    break;
-            case '{':   word_analysis(token_stream, id_list, str_list, word_type_num, BITWISE_NEGATION, buf, line_num);    break;
-            case '}':   word_analysis(token_stream, id_list, str_list, word_type_num, BITWISE_NEGATION, buf, line_num);    break;
-            case ',':   word_analysis(token_stream, id_list, str_list, word_type_num, BITWISE_NEGATION, buf, line_num);    break;
+            case '~':   word_analysis(token_stream, id_list, str_list, word_type_num, line_num, BITWISE_NEGATION);    break;
+            case '?':   word_analysis(token_stream, id_list, str_list, word_type_num, line_num, QUESTION_MARK);    break;
+            case ':':   word_analysis(token_stream, id_list, str_list, word_type_num, line_num, COLON);    break;
+            case ';':   word_analysis(token_stream, id_list, str_list, word_type_num, line_num, SEMICOLON);    break;
+            case '[':   word_analysis(token_stream, id_list, str_list, word_type_num, line_num, LEFT_SQUARE_BRACKET);    break;
+            case ']':   word_analysis(token_stream, id_list, str_list, word_type_num, line_num, RIGHT_SQUARE_BRACKET);    break;
+            case '(':   word_analysis(token_stream, id_list, str_list, word_type_num, line_num, LEFT_PARENTHESE);    break;
+            case ')':   word_analysis(token_stream, id_list, str_list, word_type_num, line_num, RIGHT_PARENTHESE);    break;
+            case '{':   word_analysis(token_stream, id_list, str_list, word_type_num, line_num, LEFT_BRACE);    break;
+            case '}':   word_analysis(token_stream, id_list, str_list, word_type_num, line_num, RIGHT_BRACE);    break;
+            case ',':   word_analysis(token_stream, id_list, str_list, word_type_num, line_num, COMMA);    break;
             case ' ':   case '\t':  break;
             case '\n':  line_num++; break;
             case EOF:   
@@ -558,7 +558,7 @@ void lexical_analysis(vector<struct token>& token_stream, vector<string>& id_lis
             else
             {
                 retract(char_num, program);
-                word_analysis(token_stream, id_list, str_list, word_type_num, ID, buf, line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, ID, buf);
                 state = 0;
             }
             break;
@@ -576,13 +576,13 @@ void lexical_analysis(vector<struct token>& token_stream, vector<string>& id_lis
                 c = get_char(char_num, program);
                 if (c == 'l' || c == 'L')
                 {
-                    word_analysis(token_stream, id_list, str_list, word_type_num, ULONG, buf, line_num);
+                    word_analysis(token_stream, id_list, str_list, word_type_num, line_num, ULONG, buf);
                     state = 0;
                 }
                 else
                 {
                     retract(char_num, program);
-                    word_analysis(token_stream, id_list, str_list, word_type_num, UINT, buf, line_num);
+                    word_analysis(token_stream, id_list, str_list, word_type_num, line_num, UINT, buf);
                     state = 0;
                 }
             }
@@ -591,20 +591,20 @@ void lexical_analysis(vector<struct token>& token_stream, vector<string>& id_lis
                 c = get_char(char_num, program);
                 if (c == 'u' || c == 'U')
                 {
-                    word_analysis(token_stream, id_list, str_list, word_type_num, ULONG, buf, line_num);
+                    word_analysis(token_stream, id_list, str_list, word_type_num, line_num, ULONG, buf);
                     state = 0;
                 }
                 else
                 {
                     retract(char_num, program);
-                    word_analysis(token_stream, id_list, str_list, word_type_num, LONG, buf, line_num);
+                    word_analysis(token_stream, id_list, str_list, word_type_num, line_num, LONG, buf);
                     state = 0;
                 }
             }
             else
             {
                 retract(char_num, program);
-                word_analysis(token_stream, id_list, str_list, word_type_num, INT, buf, line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, INT, buf);
                 state = 0;
             }
             break;
@@ -624,13 +624,13 @@ void lexical_analysis(vector<struct token>& token_stream, vector<string>& id_lis
                 c = get_char(char_num, program);
                 if (c == 'l' || c == 'L')
                 {
-                    word_analysis(token_stream, id_list, str_list, word_type_num, ULONG, buf, line_num);
+                    word_analysis(token_stream, id_list, str_list, word_type_num, line_num, ULONG, buf);
                     state = 0;
                 }
                 else
                 {
                     retract(char_num, program);
-                    word_analysis(token_stream, id_list, str_list, word_type_num, UINT, buf, line_num);
+                    word_analysis(token_stream, id_list, str_list, word_type_num, line_num, UINT, buf);
                     state = 0;
                 }
             }
@@ -639,20 +639,20 @@ void lexical_analysis(vector<struct token>& token_stream, vector<string>& id_lis
                 c = get_char(char_num, program);
                 if (c == 'u' || c == 'U')
                 {
-                    word_analysis(token_stream, id_list, str_list, word_type_num, ULONG, buf, line_num);
+                    word_analysis(token_stream, id_list, str_list, word_type_num, line_num, ULONG, buf);
                     state = 0;
                 }
                 else
                 {
                     retract(char_num, program);
-                    word_analysis(token_stream, id_list, str_list, word_type_num, LONG, buf, line_num);
+                    word_analysis(token_stream, id_list, str_list, word_type_num, line_num, LONG, buf);
                     state = 0;
                 }
             }
             else
             {
                 retract(char_num, program);
-                word_analysis(token_stream, id_list, str_list, word_type_num, INT, buf, line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, INT, buf);
                 state = 0;
             }
             break;
@@ -670,13 +670,13 @@ void lexical_analysis(vector<struct token>& token_stream, vector<string>& id_lis
                 c = get_char(char_num, program);
                 if (c == 'l' || c == 'L')
                 {
-                    word_analysis(token_stream, id_list, str_list, word_type_num, ULONG, buf, line_num, 8);
+                    word_analysis(token_stream, id_list, str_list, word_type_num, line_num, ULONG, buf, 8);
                     state = 0;
                 }
                 else
                 {
                     retract(char_num, program);
-                    word_analysis(token_stream, id_list, str_list, word_type_num, UINT, buf, line_num, 8);
+                    word_analysis(token_stream, id_list, str_list, word_type_num, line_num, UINT, buf, 8);
                     state = 0;
                 }
             }
@@ -685,20 +685,20 @@ void lexical_analysis(vector<struct token>& token_stream, vector<string>& id_lis
                 c = get_char(char_num, program);
                 if (c == 'u' || c == 'U')
                 {
-                    word_analysis(token_stream, id_list, str_list, word_type_num, ULONG, buf, line_num, 8);
+                    word_analysis(token_stream, id_list, str_list, word_type_num, line_num, ULONG, buf, 8);
                     state = 0;
                 }
                 else
                 {
                     retract(char_num, program);
-                    word_analysis(token_stream, id_list, str_list, word_type_num, LONG, buf, line_num, 8);
+                    word_analysis(token_stream, id_list, str_list, word_type_num, line_num, LONG, buf, 8);
                     state = 0;
                 }
             }
             else
             {
                 retract(char_num, program);
-                word_analysis(token_stream, id_list, str_list, word_type_num, INT, buf, line_num, 8);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, INT, buf, 8);
                 state = 0;
             }
             break;
@@ -724,13 +724,13 @@ void lexical_analysis(vector<struct token>& token_stream, vector<string>& id_lis
                 c = get_char(char_num, program);
                 if (c == 'l' || c == 'L')
                 {
-                    word_analysis(token_stream, id_list, str_list, word_type_num, ULONG, buf, line_num, 16);
+                    word_analysis(token_stream, id_list, str_list, word_type_num, line_num, ULONG, buf, 16);
                     state = 0;
                 }
                 else
                 {
                     retract(char_num, program);
-                    word_analysis(token_stream, id_list, str_list, word_type_num, UINT, buf, line_num, 16);
+                    word_analysis(token_stream, id_list, str_list, word_type_num, line_num, UINT, buf, 16);
                     state = 0;
                 }
             }
@@ -739,20 +739,20 @@ void lexical_analysis(vector<struct token>& token_stream, vector<string>& id_lis
                 c = get_char(char_num, program);
                 if (c == 'u' || c == 'U')
                 {
-                    word_analysis(token_stream, id_list, str_list, word_type_num, ULONG, buf, line_num, 16);
+                    word_analysis(token_stream, id_list, str_list, word_type_num, line_num, ULONG, buf, 16);
                     state = 0;
                 }
                 else
                 {
                     retract(char_num, program);
-                    word_analysis(token_stream, id_list, str_list, word_type_num, LONG, buf, line_num, 16);
+                    word_analysis(token_stream, id_list, str_list, word_type_num, line_num, LONG, buf, 16);
                     state = 0;
                 }
             }
             else
             {
                 retract(char_num, program);
-                word_analysis(token_stream, id_list, str_list, word_type_num, INT, buf, line_num, 16);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, INT, buf, 16);
                 state = 0;
             }
             break;
@@ -779,18 +779,18 @@ void lexical_analysis(vector<struct token>& token_stream, vector<string>& id_lis
                 state = 9;
             else if (c == 'f' || c == 'F')
             {
-                word_analysis(token_stream, id_list, str_list, word_type_num, FLOAT, buf, line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, FLOAT, buf);
                 state = 0;
             }
             else if (c == 'l' || c == 'L')
             {
-                word_analysis(token_stream, id_list, str_list, word_type_num, DOUBLE, buf, line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, DOUBLE, buf);
                 state = 0;
             }
             else
             {
                 retract(char_num, program);
-                word_analysis(token_stream, id_list, str_list, word_type_num, FLOAT, buf, line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, FLOAT, buf);
                 state = 0;
             }
             break;
@@ -827,18 +827,18 @@ void lexical_analysis(vector<struct token>& token_stream, vector<string>& id_lis
                 state = 11;
             else if (c == 'f' || c == 'F')
             {
-                word_analysis(token_stream, id_list, str_list, word_type_num, FLOAT, buf, line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, FLOAT, buf);
                 state = 0;
             }
             else if (c == 'l' || c == 'L')
             {
-                word_analysis(token_stream, id_list, str_list, word_type_num, DOUBLE, buf, line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, DOUBLE, buf);
                 state = 0;
             }
             else
             {
                 retract(char_num, program);
-                word_analysis(token_stream, id_list, str_list, word_type_num, FLOAT, buf, line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, FLOAT, buf);
                 state = 0;
             }
             break;
@@ -853,7 +853,7 @@ void lexical_analysis(vector<struct token>& token_stream, vector<string>& id_lis
                 else
                 {
                     buf.erase(0, 1);
-                    word_analysis(token_stream, id_list, str_list, word_type_num, CHAR, buf, line_num);
+                    word_analysis(token_stream, id_list, str_list, word_type_num, line_num, CHAR, buf);
                     state = 0;
                 }
 
@@ -878,7 +878,7 @@ void lexical_analysis(vector<struct token>& token_stream, vector<string>& id_lis
                 else
                 {
                     buf.erase(0, 1);
-                    word_analysis(token_stream, id_list, str_list, word_type_num, STRING, buf, line_num);
+                    word_analysis(token_stream, id_list, str_list, word_type_num, line_num, STRING, buf);
                     state = 0;
                 }
             }
@@ -892,107 +892,107 @@ void lexical_analysis(vector<struct token>& token_stream, vector<string>& id_lis
                 state = 13;
             break;
         case 14: //'<'状态
-            c = get_char(char_num, program);
+            c = get_char(char_num, program); 
             if (c == '=')
-                word_analysis(token_stream, id_list, str_list, word_type_num, RELATION_OPERATOR, to_string((int)LESS_EQUAL), line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, RELATION_OPERATOR, to_string((int)LESS_EQUAL));
             else if (c == '<')
             {
                 c = get_char(char_num, program);
                 if (c == '=')
-                    word_analysis(token_stream, id_list, str_list, word_type_num, ASSIGN_OPERATOR, to_string((int)LSHIFT_EQUAL), line_num);
+                    word_analysis(token_stream, id_list, str_list, word_type_num, line_num, ASSIGN_OPERATOR, to_string((int)LSHIFT_EQUAL));
                 else
                 {
                     retract(char_num, program);
-                    word_analysis(token_stream, id_list, str_list, word_type_num, BITWISE_LSHIFT, "", line_num);
+                    word_analysis(token_stream, id_list, str_list, word_type_num, line_num, BITWISE_LSHIFT);
                 }
             }
             else
             {
                 retract(char_num, program);
-                word_analysis(token_stream, id_list, str_list, word_type_num, RELATION_OPERATOR, to_string((int)LESS), line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, RELATION_OPERATOR, to_string((int)LESS));
             }
             state = 0;
             break;
         case 15: //">"状态
             c = get_char(char_num, program);
             if (c == '=')
-                word_analysis(token_stream, id_list, str_list, word_type_num, RELATION_OPERATOR, to_string((int)GREATER_EQUAL), line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, RELATION_OPERATOR, to_string((int)GREATER_EQUAL));
             else if (c == '>')
             {
                 c = get_char(char_num, program);
                 if (c == '=')
-                    word_analysis(token_stream, id_list, str_list, word_type_num, ASSIGN_OPERATOR, to_string((int)RSHIFT_EQUAL), line_num);
+                    word_analysis(token_stream, id_list, str_list, word_type_num, line_num, ASSIGN_OPERATOR, to_string((int)RSHIFT_EQUAL));
                 else
                 {
                     retract(char_num, program);
-                    word_analysis(token_stream, id_list, str_list, word_type_num, BITWISE_RSHIFT, "", line_num);
+                    word_analysis(token_stream, id_list, str_list, word_type_num, line_num, BITWISE_RSHIFT);
                 }
             }
             else
             {
                 retract(char_num, program);
-                word_analysis(token_stream, id_list, str_list, word_type_num, RELATION_OPERATOR, to_string((int)GREATER), line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, RELATION_OPERATOR, to_string((int)GREATER));
             }
             state = 0;
             break;
         case 16: //'='状态
             c = get_char(char_num, program);
             if (c == '=')
-                word_analysis(token_stream, id_list, str_list, word_type_num, RELATION_OPERATOR, to_string((int)EQUAL), line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, RELATION_OPERATOR, to_string((int)EQUAL));
             else
             {
                 retract(char_num, program);
-                word_analysis(token_stream, id_list, str_list, word_type_num, ASSIGN_OPERATOR, to_string((int)SIMPLE_EQUAL), line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, ASSIGN_OPERATOR, to_string((int)SIMPLE_EQUAL));
             }
             state = 0;
             break;
         case 17: //'!'状态
             c = get_char(char_num, program);
             if (c == '=')
-                word_analysis(token_stream, id_list, str_list, word_type_num, RELATION_OPERATOR, to_string((int)UNEQUAL), line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, RELATION_OPERATOR, to_string((int)UNEQUAL));
             else
             {
                 retract(char_num, program);
-                word_analysis(token_stream, id_list, str_list, word_type_num, LOGICAL_NEGATION, "", line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, LOGICAL_NEGATION);
             }
             state = 0;
             break;
         case 18: //'+'状态
             c = get_char(char_num, program);
             if (c == '=')
-                word_analysis(token_stream, id_list, str_list, word_type_num, ASSIGN_OPERATOR, to_string((int)PLUS_EQUAL), line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, ASSIGN_OPERATOR, to_string((int)PLUS_EQUAL));
             else if (c == '+')
-                word_analysis(token_stream, id_list, str_list, word_type_num, INC, "", line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, INC);
             else
             {
                 retract(char_num, program);
-                word_analysis(token_stream, id_list, str_list, word_type_num, PLUS, "", line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, PLUS);
             }
             state = 0;
             break;
         case 19: //'-'状态
             c = get_char(char_num, program);
             if (c == '=')
-                word_analysis(token_stream, id_list, str_list, word_type_num, ASSIGN_OPERATOR, to_string((int)MINUS_EQUAL), line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, ASSIGN_OPERATOR, to_string((int)MINUS_EQUAL));
             else if (c == '-')
-                word_analysis(token_stream, id_list, str_list, word_type_num, DEC, "", line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, DEC);
             else if (c == '>')
-                word_analysis(token_stream, id_list, str_list, word_type_num, ARROW, "", line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, ARROW);
             else
             {
                 retract(char_num, program);
-                word_analysis(token_stream, id_list, str_list, word_type_num, MINUS, "", line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, MINUS);
             }
             state = 0;
             break;
         case 20: //'*'状态
             c = get_char(char_num, program);
             if (c == '=')
-                word_analysis(token_stream, id_list, str_list, word_type_num, ASSIGN_OPERATOR, to_string((int)MULTIPLY_EQUAL), line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, ASSIGN_OPERATOR, to_string((int)MULTIPLY_EQUAL));
             else
             {
                 retract(char_num, program);
-                word_analysis(token_stream, id_list, str_list, word_type_num, MULTIPLY, "", line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, MULTIPLY);
             }
             state = 0;
             break;
@@ -1000,7 +1000,7 @@ void lexical_analysis(vector<struct token>& token_stream, vector<string>& id_lis
             c = get_char(char_num, program);
             if (c == '=')
             {
-                word_analysis(token_stream, id_list, str_list, word_type_num, ASSIGN_OPERATOR, to_string((int)DIVIDE_EQUAL), line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, ASSIGN_OPERATOR, to_string((int)DIVIDE_EQUAL));
                 state = 0;
             }
             else if (c == '/') //单行注释
@@ -1010,7 +1010,7 @@ void lexical_analysis(vector<struct token>& token_stream, vector<string>& id_lis
             else
             {
                 retract(char_num, program);
-                word_analysis(token_stream, id_list, str_list, word_type_num, DIVIDE, "", line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, DIVIDE);
                 state = 0;
             }
             break;
@@ -1058,48 +1058,48 @@ void lexical_analysis(vector<struct token>& token_stream, vector<string>& id_lis
             break;
         case 25: //'%'状态
             if (c == '=')
-                word_analysis(token_stream, id_list, str_list, word_type_num, ASSIGN_OPERATOR, to_string((int)MOD_EQUAL), line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, ASSIGN_OPERATOR, to_string((int)MOD_EQUAL));
             else
             {
                 retract(char_num, program);
-                word_analysis(token_stream, id_list, str_list, word_type_num, MOD, "", line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, MOD);
             }
             state = 0;
             break;
         case 26: //'&'状态
             c = get_char(char_num, program);
             if (c == '=')
-                word_analysis(token_stream, id_list, str_list, word_type_num, ASSIGN_OPERATOR, to_string((int)AND_EQUAL), line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, ASSIGN_OPERATOR, to_string((int)AND_EQUAL));
             else if (c == '&')
-                word_analysis(token_stream, id_list, str_list, word_type_num, LOGICAL_AND, "", line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, LOGICAL_AND);
             else
             {
                 retract(char_num, program);
-                word_analysis(token_stream, id_list, str_list, word_type_num, BITWISE_AND, "", line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, BITWISE_AND);
             }
             state = 0;
             break;
         case 27: //'|'状态
             c = get_char(char_num, program);
             if (c == '=')
-                word_analysis(token_stream, id_list, str_list, word_type_num, ASSIGN_OPERATOR, to_string((int)OR_EQUAL), line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, ASSIGN_OPERATOR, to_string((int)OR_EQUAL));
             else if (c == '|')
-                word_analysis(token_stream, id_list, str_list, word_type_num, LOGICAL_OR, "", line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, LOGICAL_OR);
             else
             {
                 retract(char_num, program);
-                word_analysis(token_stream, id_list, str_list, word_type_num, BITWISE_OR, "", line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, BITWISE_OR);
             }
             state = 0;
             break;
         case 28: //'^'状态
             c = get_char(char_num, program);
             if (c == '=')
-                word_analysis(token_stream, id_list, str_list, word_type_num, ASSIGN_OPERATOR, to_string((int)XOR_EQUAL), line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, ASSIGN_OPERATOR, to_string((int)XOR_EQUAL));
             else
             {
                 retract(char_num, program);
-                word_analysis(token_stream, id_list, str_list, word_type_num, BITWISE_XOR, "", line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, BITWISE_XOR);
             }
             state = 0;
             break;
@@ -1110,7 +1110,7 @@ void lexical_analysis(vector<struct token>& token_stream, vector<string>& id_lis
             else
             {
                 retract(char_num, program);
-                word_analysis(token_stream, id_list, str_list, word_type_num, DOT, "", line_num);
+                word_analysis(token_stream, id_list, str_list, word_type_num, line_num, DOT);
                 state = 0;
             }
             break;
