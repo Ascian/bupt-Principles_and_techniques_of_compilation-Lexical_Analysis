@@ -259,6 +259,7 @@ void lexical_analysis(vector<struct token>& token_stream, vector<string>& id_lis
 
 int main()
 {
+
     ifstream program;
     program.open("program.txt", ios::in);
     vector<struct token> token_stream;
@@ -267,6 +268,8 @@ int main()
     int line_num = 0;
     int char_num = 0;
     vector<int> word_type_num(WORD_TYPE_AMOUNT);
+
+    cout << "Designed by CHEN YU, built: " << __DATE__ << " " <<  __TIME__ << endl;
 
     lexical_analysis(token_stream, id_list, str_list, line_num, word_type_num, char_num, program);
 
@@ -349,34 +352,16 @@ int reserve(const string& str)
     return -1;
 }
 
-//二分搜索str在table的位置，若搜索到返回位置，否者插入到对应位置
+//搜索str在table的位置，若搜索到返回位置，否者插入到表格末尾
 int table_insert(vector<string>& table, const string& str)
 {
-    int high = table.size() - 1;
-    int low = 0;
-    int middle = (high + low) / 2;
-    bool is_bigger = false;
-    while (high >= low)
+    for (int i = 0; i < table.size(); i++)
     {
-        middle = (high + low) / 2;
-        if (table[middle].compare(str) == 0)
-            return middle;
-        else if (table[middle].compare(str) < 0)
-        {
-            low = middle + 1;
-            is_bigger = true;
-        }
-        else
-        {
-            high = middle - 1;
-            is_bigger = false;
-        }
+        if (table[i].compare(str) == 0)
+            return i;
     }
-    if(is_bigger)
-        table.insert(table.begin() + middle + 1, str);
-    else
-        table.insert(table.begin() + middle, str);
-    return middle;
+    table.push_back(str);
+    return table.size() - 1;
 }
 
 //将分析出的记号加入记号流
@@ -619,6 +604,8 @@ void lexical_analysis(vector<struct token>& token_stream, vector<string>& id_lis
                 state = 7;
             else if (c == '.')
                 state = 8;
+            else if (c == 'e' || c == 'E')
+                state = 9;
             else if (c == 'u' || c == 'U')
             {
                 c = get_char(char_num, program);
@@ -665,6 +652,8 @@ void lexical_analysis(vector<struct token>& token_stream, vector<string>& id_lis
                 state = 7;
             else if (c == '.')
                 state = 8;
+            else if (c == 'e' || c == 'E')
+                state = 9;
             else if (c == 'u' || c == 'U')
             {
                 c = get_char(char_num, program);
@@ -763,6 +752,8 @@ void lexical_analysis(vector<struct token>& token_stream, vector<string>& id_lis
                 state = 7;
             else if (c == '.')
                 state = 8;
+            else if (c == 'e' || c == 'E')
+                state = 9;
             else
             {
                 retract(char_num, program);
